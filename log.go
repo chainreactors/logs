@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-var Log *Logger
-
 func NewLogger(quiet, debug bool) *Logger {
 	return &Logger{
 		Quiet:   quiet,
@@ -39,7 +37,7 @@ func (log *Logger) InitFile() {
 	LogFilename = path.Join(GetExcPath(), LogFilename)
 	log.LogFile, err = NewFile(LogFilename, false, false, true)
 	if err != nil {
-		Log.Warn("cannot create logfile, err:" + err.Error())
+		log.Warn("cannot create logfile, err:" + err.Error())
 		return
 	}
 	log.LogCh = make(chan string, 100)
