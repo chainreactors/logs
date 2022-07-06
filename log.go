@@ -16,31 +16,36 @@ func NewLogger(quiet, debug bool) *Logger {
 }
 
 type Logger struct {
-	Quiet   bool
-	Clean   bool
-	IsDebug bool
-	LogCh   chan string
-	LogFile *File
+	Quiet       bool
+	Clean       bool
+	IsDebug     bool
+	logCh       chan string
+	LogFileName string
+	logFile     *File
 }
 
-var LogFilename string
-
-func (log *Logger) InitFile() {
-	// 初始化进度文件
-	_ = os.Remove(path.Join(GetExcPath(), ".sock.lock"))
-	if !IsExist(".sock.lock") {
-		LogFilename = ".sock.lock"
-	} else {
-		LogFilename = fmt.Sprintf(".%d.unix", time.Now().Unix()-100000)
+func (log *Logger) Init() {
+	if log.LogFileName != "" {
+		log.initFile()
+		go func() {
+			for res := range log.logCh {
+				log.logFile.SyncWrite(res)
+			}
+			log.logFile.Close()
+		}()
 	}
+}
+
+func (log *Logger) initFile() {
+	// 初始化进度文件
 	var err error
-	LogFilename = path.Join(GetExcPath(), LogFilename)
-	log.LogFile, err = NewFile(LogFilename, false, false, true)
+	log.LogFileName = path.Join(GetExcPath(), log.LogFileName)
+	log.logFile, err = NewFile(log.LogFileName, false, false, true)
 	if err != nil {
 		log.Warn("cannot create logfile, err:" + err.Error())
 		return
 	}
-	log.LogCh = make(chan string, 100)
+	log.logCh = make(chan string, 100)
 }
 
 func (log *Logger) Important(s string) {
@@ -48,8 +53,8 @@ func (log *Logger) Important(s string) {
 	if !log.Quiet {
 		fmt.Print(s)
 	}
-	if log.LogFile != nil {
-		log.LogCh <- s
+	if log.logFile != nil {
+		log.logCh <- s
 	}
 }
 
@@ -58,8 +63,8 @@ func (log *Logger) Importantf(format string, s ...interface{}) {
 	if !log.Quiet {
 		fmt.Print(line)
 	}
-	if log.LogFile != nil {
-		log.LogCh <- line
+	if log.logFile != nil {
+		log.logCh <- line
 	}
 }
 
@@ -111,10 +116,17 @@ func (log *Logger) Debugf(format string, s ...interface{}) {
 	}
 }
 
-func (log *Logger) Close() {
-	if log.LogCh != nil {
-		close(log.LogCh)
+func (log *Logger) Close(remove bool) {
+	if log.logCh != nil {
+		close(log.logCh)
 		time.Sleep(time.Microsecond * 200)
+	}
+
+	if remove {
+		err := os.Remove(log.LogFileName)
+		if err != nil {
+			log.Warn(err.Error())
+		}
 	}
 }
 
