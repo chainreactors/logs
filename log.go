@@ -69,6 +69,12 @@ func (log *Logger) Default(s string) {
 	}
 }
 
+func (log *Logger) Defaultf(format string, s ...interface{}) {
+	if !log.Clean {
+		fmt.Printf(format, s...)
+	}
+}
+
 func (log *Logger) Error(s string) {
 	if !log.Quiet {
 		fmt.Println("[-] " + s)
