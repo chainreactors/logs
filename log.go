@@ -9,10 +9,17 @@ import (
 )
 
 func NewLogger(quiet, debug bool) *Logger {
-	return &Logger{
+	log := &Logger{
 		Quiet:   quiet,
 		IsDebug: debug,
+		Level:   1,
 	}
+
+	if debug {
+		log.Level = 0
+	}
+
+	return log
 }
 
 type Logger struct {
@@ -22,22 +29,26 @@ type Logger struct {
 	logCh       chan string
 	LogFileName string
 	logFile     *File
+	Level       int
 }
 
+const (
+	Debug = iota
+	Warn
+	Default
+	Error
+	Important
+)
+
 func (log *Logger) Init() {
-	if log.LogFileName != "" {
-		log.initFile()
-		go func() {
-			for res := range log.logCh {
-				log.logFile.SyncWrite(res)
-			}
-			log.logFile.Close()
-		}()
-	}
+	log.initFile()
 }
 
 func (log *Logger) initFile() {
 	// 初始化进度文件
+	if log.LogFileName == "" {
+		return
+	}
 	var err error
 	log.LogFileName = path.Join(GetExcPath(), log.LogFileName)
 	log.logFile, err = NewFile(log.LogFileName, false, false, true)
@@ -50,11 +61,12 @@ func (log *Logger) initFile() {
 
 func (log *Logger) Important(s string) {
 	s = fmt.Sprintf("[*] %s , %s\n", s, getCurtime())
-	if !log.Quiet {
+	if !log.Quiet && Important >= log.Level {
 		fmt.Print(s)
-	}
-	if log.logFile != nil {
-		log.logCh <- s
+		if log.logFile != nil {
+			log.logFile.SafeWrite(s)
+			log.logFile.SafeSync()
+		}
 	}
 }
 
@@ -117,9 +129,8 @@ func (log *Logger) Debugf(format string, s ...interface{}) {
 }
 
 func (log *Logger) Close(remove bool) {
-	if log.logCh != nil {
-		close(log.logCh)
-		time.Sleep(time.Microsecond * 200)
+	if log.logFile != nil {
+		log.logFile.Close()
 	}
 
 	if remove {
