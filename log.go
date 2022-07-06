@@ -35,9 +35,17 @@ type Logger struct {
 const (
 	Debug = iota
 	Warn
-	Default
+	Info
 	Error
 	Important
+)
+
+var (
+	DebugFormatter     = "[debug] %s \n"
+	WarnFormatter      = "[warn] %s \n"
+	InfoFormatter      = "[+] %s ," + getCurtime() + "\n"
+	ErrorFormatter     = "[-] %s ," + getCurtime() + "\n"
+	ImportantFormatter = "[*] %s ," + getCurtime() + "\n"
 )
 
 func (log *Logger) Init() {
@@ -59,9 +67,21 @@ func (log *Logger) initFile() {
 	log.logCh = make(chan string, 100)
 }
 
-func (log *Logger) Important(s string) {
-	s = fmt.Sprintf("[*] %s , %s\n", s, getCurtime())
-	if !log.Quiet && Important >= log.Level {
+func (log *Logger) Console(s string) {
+	if !log.Clean {
+		fmt.Print(s)
+	}
+}
+
+func (log *Logger) Consolef(format string, s ...interface{}) {
+	if !log.Clean {
+		fmt.Printf(format, s...)
+	}
+}
+
+func (log *Logger) logInterface(formatter string, level int, s string) {
+	s = fmt.Sprintf(formatter, s)
+	if !log.Quiet && level >= log.Level {
 		fmt.Print(s)
 		if log.logFile != nil {
 			log.logFile.SafeWrite(s)
@@ -70,62 +90,56 @@ func (log *Logger) Important(s string) {
 	}
 }
 
-func (log *Logger) Importantf(format string, s ...interface{}) {
-	line := fmt.Sprintf("[*] "+format+", "+getCurtime()+"\n", s...)
-	if !log.Quiet {
+func (log *Logger) logInterfacef(formatter string, level int, format string, s ...interface{}) {
+	line := fmt.Sprintf(fmt.Sprintf(formatter, format), s...)
+	if !log.Quiet && level >= log.Level {
 		fmt.Print(line)
-	}
-	if log.logFile != nil {
-		log.logCh <- line
-	}
-}
-
-func (log *Logger) Default(s string) {
-	if !log.Clean {
-		fmt.Print(s)
+		if log.logFile != nil {
+			log.logFile.SafeWrite(line)
+			log.logFile.SafeSync()
+		}
 	}
 }
 
-func (log *Logger) Defaultf(format string, s ...interface{}) {
-	if !log.Clean {
-		fmt.Printf(format, s...)
-	}
+func (log *Logger) Important(s string) {
+	log.logInterface(ImportantFormatter, Important, s)
+}
+
+func (log *Logger) Importantf(format string, s ...interface{}) {
+	log.logInterfacef(ImportantFormatter, Important, format, s...)
+}
+
+func (log *Logger) Info(s string) {
+	log.logInterface(InfoFormatter, Info, s)
+}
+
+func (log *Logger) Infof(format string, s ...interface{}) {
+	log.logInterfacef(InfoFormatter, Info, format, s...)
 }
 
 func (log *Logger) Error(s string) {
-	if !log.Quiet {
-		fmt.Println("[-] " + s)
-	}
+	log.logInterface(ErrorFormatter, Error, s)
 }
 
 func (log *Logger) Errorf(format string, s ...interface{}) {
-	if !log.Quiet {
-		fmt.Printf("[-] "+format+"\n", s...)
-	}
+	log.logInterfacef(ErrorFormatter, Error, format, s...)
 }
 
 func (log *Logger) Warn(s string) {
-	if !log.Quiet {
-		fmt.Println("[warn] " + s)
-	}
+	log.logInterface(WarnFormatter, Warn, s)
 }
 
 func (log *Logger) Warnf(format string, s ...interface{}) {
-	if !log.Quiet {
-		fmt.Printf("[warn] "+format+"\n", s...)
-	}
+	log.logInterfacef(WarnFormatter, Warn, format, s...)
 }
 
 func (log *Logger) Debug(s string) {
-	if log.IsDebug {
-		fmt.Println("[debug] " + s)
-	}
+	log.logInterface(DebugFormatter, Debug, s)
+
 }
 
 func (log *Logger) Debugf(format string, s ...interface{}) {
-	if log.IsDebug {
-		fmt.Printf("[debug] "+format+"\n", s...)
-	}
+	log.logInterfacef(DebugFormatter, Debug, format, s...)
 }
 
 func (log *Logger) Close(remove bool) {
@@ -141,16 +155,8 @@ func (log *Logger) Close(remove bool) {
 	}
 }
 
-func IsExist(filename string) bool {
-	var exist = true
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		exist = false
-	}
-	return exist
-}
-
 //获取当前时间
 func getCurtime() string {
-	curtime := time.Now().Format("2006-01-02 15:04.05")
+	curtime := time.Now().Format("2006-01-01 01:01.01")
 	return curtime
 }
