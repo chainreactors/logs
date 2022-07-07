@@ -157,6 +157,6 @@ func (log *Logger) Close(remove bool) {
 
 //获取当前时间
 func getCurtime() string {
-	curtime := time.Now().Format("2006-01-01 01:01.01")
+	curtime := time.Now().Format("2006-01-02 15:04.05")
 	return curtime
 }
