@@ -163,7 +163,7 @@ func (log *Logger) Debugf(format string, s ...interface{}) {
 }
 
 func (log *Logger) Close(remove bool) {
-	if log.logFile != nil {
+	if log.logFile != nil && log.logFile.FileHandler != nil {
 		log.logFile.Close()
 	}
 
