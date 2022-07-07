@@ -5,14 +5,16 @@ import (
 	. "github.com/chainreactors/files"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
 func NewLogger(quiet, debug bool) *Logger {
 	log := &Logger{
-		Quiet:   quiet,
-		IsDebug: debug,
-		Level:   1,
+		Quiet:      quiet,
+		IsDebug:    debug,
+		Level:      1,
+		SuffixFunc: getCurtime,
 	}
 
 	if debug {
@@ -30,6 +32,8 @@ type Logger struct {
 	LogFileName string
 	logFile     *File
 	Level       int
+	SuffixFunc  func() string
+	PrefixFunc  func() string
 }
 
 const (
@@ -41,11 +45,11 @@ const (
 )
 
 var (
-	DebugFormatter     = "[debug] %s \n"
-	WarnFormatter      = "[warn] %s \n"
-	InfoFormatter      = "[+] %s ," + getCurtime() + "\n"
-	ErrorFormatter     = "[-] %s ," + getCurtime() + "\n"
-	ImportantFormatter = "[*] %s ," + getCurtime() + "\n"
+	DebugFormatter     = "[debug] %s "
+	WarnFormatter      = "[warn] %s "
+	InfoFormatter      = "[+] %s {{suffix}}"
+	ErrorFormatter     = "[-] %s {{suffix}}"
+	ImportantFormatter = "[*] %s {{suffix}}"
 )
 
 func (log *Logger) Init() {
@@ -80,11 +84,18 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 }
 
 func (log *Logger) logInterface(formatter string, level int, s string) {
-	s = fmt.Sprintf(formatter, s)
+	line := fmt.Sprintf(formatter, s)
+	if strings.HasSuffix(line, "{{suffix}}") {
+		line = line[:len(line)-10] + log.SuffixFunc()
+	}
+	if strings.HasPrefix(line, "{{prefix}}") {
+		line = log.PrefixFunc() + line[10:]
+	}
+	line += "\n"
 	if !log.Quiet && level >= log.Level {
-		fmt.Print(s)
+		fmt.Print(line)
 		if log.logFile != nil {
-			log.logFile.SafeWrite(s)
+			log.logFile.SafeWrite(line)
 			log.logFile.SafeSync()
 		}
 	}
@@ -92,6 +103,13 @@ func (log *Logger) logInterface(formatter string, level int, s string) {
 
 func (log *Logger) logInterfacef(formatter string, level int, format string, s ...interface{}) {
 	line := fmt.Sprintf(fmt.Sprintf(formatter, format), s...)
+	if strings.HasSuffix(line, "{{suffix}}") {
+		line = line[:len(s)-10] + log.SuffixFunc()
+	}
+	if strings.HasPrefix(line, "{{prefix}}") {
+		line = log.PrefixFunc() + line[10:]
+	}
+	line += "\n"
 	if !log.Quiet && level >= log.Level {
 		fmt.Print(line)
 		if log.logFile != nil {
