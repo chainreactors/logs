@@ -87,10 +87,10 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 
 func (log *Logger) logInterface(formatter string, level int, s string) {
 	line := fmt.Sprintf(formatter, s)
-	if len(line) >= 10 && strings.HasSuffix(line, "{{suffix}}") {
+	if len(line) >= 9 && strings.HasSuffix(line, "{{suffix}}") {
 		line = line[:len(line)-10] + log.SuffixFunc()
 	}
-	if len(line) >= 10 && strings.HasPrefix(line, "{{prefix}}") {
+	if len(line) >= 9 && strings.HasPrefix(line, "{{prefix}}") {
 		line = log.PrefixFunc() + line[10:]
 	}
 	line += "\n"
@@ -105,10 +105,10 @@ func (log *Logger) logInterface(formatter string, level int, s string) {
 
 func (log *Logger) logInterfacef(formatter string, level int, format string, s ...interface{}) {
 	line := fmt.Sprintf(fmt.Sprintf(formatter, format), s...)
-	if len(line) >= 10 && strings.HasSuffix(line, "{{suffix}}") {
+	if len(line) >= 9 && strings.HasSuffix(line, "{{suffix}}") {
 		line = line[:len(s)-10] + log.SuffixFunc()
 	}
-	if len(line) >= 10 && strings.HasPrefix(line, "{{prefix}}") {
+	if len(line) >= 9 && strings.HasPrefix(line, "{{prefix}}") {
 		line = log.PrefixFunc() + line[10:]
 	}
 	line += "\n"
