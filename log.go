@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var Log *Logger
+
 func NewLogger(quiet, debug bool) *Logger {
 	log := &Logger{
 		Quiet:   quiet,
