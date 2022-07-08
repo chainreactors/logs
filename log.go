@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var Log *Logger
+var Log *Logger = NewLogger(false, false)
 
 func NewLogger(quiet, debug bool) *Logger {
 	log := &Logger{
