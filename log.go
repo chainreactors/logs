@@ -13,9 +13,8 @@ var Log *Logger = NewLogger(false, false)
 
 func NewLogger(quiet, debug bool) *Logger {
 	log := &Logger{
-		Quiet:   quiet,
-		IsDebug: debug,
-		Level:   1,
+		Quiet: quiet,
+		Level: 1,
 		SuffixFunc: func() string {
 			return ", " + getCurtime()
 		},
@@ -31,7 +30,6 @@ func NewLogger(quiet, debug bool) *Logger {
 type Logger struct {
 	Quiet       bool
 	Clean       bool
-	IsDebug     bool
 	logCh       chan string
 	LogFileName string
 	logFile     *File
