@@ -9,19 +9,15 @@ import (
 	"time"
 )
 
-var Log *Logger = NewLogger(false, false)
+var Log *Logger = NewLogger(1, false)
 
-func NewLogger(quiet, debug bool) *Logger {
+func NewLogger(level int, quiet bool) *Logger {
 	log := &Logger{
 		Quiet: quiet,
-		Level: 1,
+		Level: level,
 		SuffixFunc: func() string {
 			return ", " + getCurtime()
 		},
-	}
-
-	if debug {
-		log.Level = 0
 	}
 
 	return log
