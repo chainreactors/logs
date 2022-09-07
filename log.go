@@ -11,12 +11,16 @@ import (
 
 var Log *Logger = NewLogger(1, false)
 
-func NewLogger(level int, quiet bool) *Logger {
+func NewLogger(level Level, quiet bool) *Logger {
 	log := &Logger{
 		Quiet: quiet,
 		Level: level,
+		Color: false,
 		SuffixFunc: func() string {
 			return ", " + getCurtime()
+		},
+		PrefixFunc: func() string {
+			return ""
 		},
 	}
 
@@ -26,21 +30,31 @@ func NewLogger(level int, quiet bool) *Logger {
 type Logger struct {
 	Quiet       bool
 	Clean       bool
+	Color       bool
 	logCh       chan string
 	LogFileName string
 	logFile     *File
-	Level       int
+	Level       Level
 	SuffixFunc  func() string
 	PrefixFunc  func() string
 }
 
+type Level int
+
 const (
-	Debug = iota
+	Debug Level = iota
 	Warn
 	Info
 	Error
 	Important
 )
+
+var DefaultColorMap = map[Level]func(string) string{
+	Debug:     Yellow,
+	Error:     Red,
+	Warn:      Cyan,
+	Important: Green,
+}
 
 var (
 	DebugFormatter     = "[debug] %s "
@@ -51,17 +65,14 @@ var (
 )
 
 func (log *Logger) Init() {
-	log.initFile()
+	log.InitFile(log.LogFileName)
 }
 
-func (log *Logger) initFile() {
+func (log *Logger) InitFile(filename string) {
 	// 初始化进度文件
-	if log.LogFileName == "" {
-		return
-	}
 	var err error
-	log.LogFileName = path.Join(GetExcPath(), log.LogFileName)
-	log.logFile, err = NewFile(log.LogFileName, false, false, true)
+	Log.LogFileName = path.Join(GetExcPath(), filename)
+	log.logFile, err = NewFile(Log.LogFileName, false, false, true)
 	if err != nil {
 		log.Warn("cannot create logfile, err:" + err.Error())
 		return
@@ -81,17 +92,18 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 	}
 }
 
-func (log *Logger) logInterface(formatter string, level int, s string) {
+func (log *Logger) logInterface(formatter string, level Level, s string) {
 	line := fmt.Sprintf(formatter, s)
-	if len(line) >= 10 && strings.HasSuffix(line, "{{suffix}}") {
-		line = line[:len(line)-10] + log.SuffixFunc()
-	}
-	if len(line) >= 10 && strings.HasPrefix(line, "{{prefix}}") {
-		line = log.PrefixFunc() + line[10:]
-	}
+	line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
+	line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 	line += "\n"
 	if !log.Quiet && level >= log.Level {
-		fmt.Print(line)
+		if log.Color {
+			fmt.Print(DefaultColorMap[level](line))
+		} else {
+			fmt.Print(line)
+		}
+
 		if log.logFile != nil {
 			log.logFile.SafeWrite(line)
 			log.logFile.SafeSync()
@@ -99,14 +111,10 @@ func (log *Logger) logInterface(formatter string, level int, s string) {
 	}
 }
 
-func (log *Logger) logInterfacef(formatter string, level int, format string, s ...interface{}) {
+func (log *Logger) logInterfacef(formatter string, level Level, format string, s ...interface{}) {
 	line := fmt.Sprintf(fmt.Sprintf(formatter, format), s...)
-	if len(line) >= 10 && strings.HasSuffix(line, "{{suffix}}") {
-		line = line[:len(line)-10] + log.SuffixFunc()
-	}
-	if len(line) >= 10 && strings.HasPrefix(line, "{{prefix}}") {
-		line = log.PrefixFunc() + line[10:]
-	}
+	line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
+	line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 	line += "\n"
 	if !log.Quiet && level >= log.Level {
 		fmt.Print(line)
