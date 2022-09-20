@@ -3,6 +3,7 @@ package logs
 import (
 	"fmt"
 	. "github.com/chainreactors/files"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -13,9 +14,10 @@ var Log *Logger = NewLogger(1, false)
 
 func NewLogger(level Level, quiet bool) *Logger {
 	log := &Logger{
-		Quiet: quiet,
-		Level: level,
-		Color: false,
+		Quiet:  quiet,
+		Level:  level,
+		Color:  false,
+		writer: os.Stdout,
 		SuffixFunc: func() string {
 			return ", " + getCurtime()
 		},
@@ -34,6 +36,7 @@ type Logger struct {
 	logCh       chan string
 	LogFileName string
 	logFile     *File
+	writer      io.Writer
 	Level       Level
 	SuffixFunc  func() string
 	PrefixFunc  func() string
@@ -82,13 +85,13 @@ func (log *Logger) InitFile(filename string) {
 
 func (log *Logger) Console(s string) {
 	if !log.Clean {
-		fmt.Print(s)
+		fmt.Fprint(log.writer, s)
 	}
 }
 
 func (log *Logger) Consolef(format string, s ...interface{}) {
 	if !log.Clean {
-		fmt.Printf(format, s...)
+		fmt.Fprintf(log.writer, format, s...)
 	}
 }
 
@@ -99,9 +102,9 @@ func (log *Logger) logInterface(formatter string, level Level, s string) {
 	line += "\n"
 	if !log.Quiet && level >= log.Level {
 		if log.Color {
-			fmt.Print(DefaultColorMap[level](line))
+			fmt.Fprint(log.writer, DefaultColorMap[level](line))
 		} else {
-			fmt.Print(line)
+			fmt.Fprint(log.writer, line)
 		}
 
 		if log.logFile != nil {
