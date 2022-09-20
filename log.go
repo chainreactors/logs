@@ -17,7 +17,7 @@ func NewLogger(level Level, quiet bool) *Logger {
 		Quiet:  quiet,
 		Level:  level,
 		Color:  false,
-		writer: os.Stdout,
+		Writer: os.Stdout,
 		SuffixFunc: func() string {
 			return ", " + getCurtime()
 		},
@@ -36,7 +36,7 @@ type Logger struct {
 	logCh       chan string
 	LogFileName string
 	logFile     *File
-	writer      io.Writer
+	Writer      io.Writer
 	Level       Level
 	SuffixFunc  func() string
 	PrefixFunc  func() string
@@ -85,13 +85,13 @@ func (log *Logger) InitFile(filename string) {
 
 func (log *Logger) Console(s string) {
 	if !log.Clean {
-		fmt.Fprint(log.writer, s)
+		fmt.Fprint(log.Writer, s)
 	}
 }
 
 func (log *Logger) Consolef(format string, s ...interface{}) {
 	if !log.Clean {
-		fmt.Fprintf(log.writer, format, s...)
+		fmt.Fprintf(log.Writer, format, s...)
 	}
 }
 
@@ -102,9 +102,9 @@ func (log *Logger) logInterface(formatter string, level Level, s string) {
 	line += "\n"
 	if !log.Quiet && level >= log.Level {
 		if log.Color {
-			fmt.Fprint(log.writer, DefaultColorMap[level](line))
+			fmt.Fprint(log.Writer, DefaultColorMap[level](line))
 		} else {
-			fmt.Fprint(log.writer, line)
+			fmt.Fprint(log.Writer, line)
 		}
 
 		if log.logFile != nil {
