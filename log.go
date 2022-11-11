@@ -120,7 +120,12 @@ func (log *Logger) logInterfacef(formatter string, level Level, format string, s
 	line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 	line += "\n"
 	if !log.Quiet && level >= log.Level {
-		fmt.Print(line)
+		if log.Color {
+			fmt.Fprint(log.Writer, DefaultColorMap[level](line))
+		} else {
+			fmt.Fprint(log.Writer, line)
+		}
+
 		if log.logFile != nil {
 			log.logFile.SafeWrite(line)
 			log.logFile.SafeSync()
