@@ -6,11 +6,12 @@ import (
 	"io"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
 
-var Log *Logger = NewLogger(1, false)
+var Log *Logger = NewLogger(Warn, false)
 
 func NewLogger(level Level, quiet bool) *Logger {
 	log := &Logger{
@@ -45,13 +46,14 @@ type Logger struct {
 type Level int
 
 const (
-	Debug Level = iota
-	Warn
-	Info
-	Error
-	Important
+	Debug     Level = 10
+	Warn      Level = 20
+	Info      Level = 30
+	Error     Level = 40
+	Important Level = 50
 )
 
+var defaultColor = func(s string) string { return s }
 var DefaultColorMap = map[Level]func(string) string{
 	Debug:     Yellow,
 	Error:     Red,
@@ -59,13 +61,45 @@ var DefaultColorMap = map[Level]func(string) string{
 	Important: Green,
 }
 
-var (
-	DebugFormatter     = "[debug] %s "
-	WarnFormatter      = "[warn] %s "
-	InfoFormatter      = "[+] %s {{suffix}}"
-	ErrorFormatter     = "[-] %s {{suffix}}"
-	ImportantFormatter = "[*] %s {{suffix}}"
-)
+var DefaultFormatterMap = map[Level]string{
+	Debug:     "[debug] %s ",
+	Warn:      "[warn] %s ",
+	Info:      "[+] %s {{suffix}}",
+	Error:     "[-] %s {{suffix}}",
+	Important: "[*] %s {{suffix}}",
+}
+
+var DefaultNameMap = map[Level]string{
+	Debug:     "debug",
+	Info:      "info",
+	Error:     "error",
+	Warn:      "warn",
+	Important: "important",
+}
+
+func (l Level) Name() string {
+	if name, ok := DefaultNameMap[l]; ok {
+		return name
+	} else {
+		return strconv.Itoa(int(l))
+	}
+}
+
+func (l Level) Formatter() string {
+	if formatter, ok := DefaultFormatterMap[l]; ok {
+		return formatter
+	} else {
+		return "[" + l.Name() + "] %s"
+	}
+}
+
+func (l Level) Color() func(string) string {
+	if f, ok := DefaultColorMap[l]; ok {
+		return f
+	} else {
+		return defaultColor
+	}
+}
 
 func (log *Logger) Init() {
 	log.InitFile(log.LogFileName)
@@ -95,14 +129,14 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 	}
 }
 
-func (log *Logger) logInterface(formatter string, level Level, s string) {
-	line := fmt.Sprintf(formatter, s)
+func (log *Logger) logInterface(level Level, s string) {
+	line := fmt.Sprintf(level.Formatter(), s)
 	line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 	line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 	line += "\n"
 	if !log.Quiet && level >= log.Level {
 		if log.Color {
-			fmt.Fprint(log.Writer, DefaultColorMap[level](line))
+			fmt.Fprint(log.Writer, level.Color()(line))
 		} else {
 			fmt.Fprint(log.Writer, line)
 		}
@@ -114,14 +148,14 @@ func (log *Logger) logInterface(formatter string, level Level, s string) {
 	}
 }
 
-func (log *Logger) logInterfacef(formatter string, level Level, format string, s ...interface{}) {
-	line := fmt.Sprintf(fmt.Sprintf(formatter, format), s...)
+func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
+	line := fmt.Sprintf(fmt.Sprintf(level.Formatter(), format), s...)
 	line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 	line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 	line += "\n"
 	if !log.Quiet && level >= log.Level {
 		if log.Color {
-			fmt.Fprint(log.Writer, DefaultColorMap[level](line))
+			fmt.Fprint(log.Writer, level.Color()(line))
 		} else {
 			fmt.Fprint(log.Writer, line)
 		}
@@ -131,47 +165,55 @@ func (log *Logger) logInterfacef(formatter string, level Level, format string, s
 			log.logFile.SafeSync()
 		}
 	}
+}
+
+func (log *Logger) Log(level Level, s string) {
+	log.logInterface(level, s)
+}
+
+func (log *Logger) Logf(level Level, format string, s ...interface{}) {
+	log.logInterfacef(level, format, s...)
 }
 
 func (log *Logger) Important(s string) {
-	log.logInterface(ImportantFormatter, Important, s)
+	log.logInterface(Important, s)
 }
 
 func (log *Logger) Importantf(format string, s ...interface{}) {
-	log.logInterfacef(ImportantFormatter, Important, format, s...)
+	log.logInterfacef(Important, format, s...)
 }
 
 func (log *Logger) Info(s string) {
-	log.logInterface(InfoFormatter, Info, s)
+	log.logInterface(Info, s)
 }
 
 func (log *Logger) Infof(format string, s ...interface{}) {
-	log.logInterfacef(InfoFormatter, Info, format, s...)
+	log.logInterfacef(Info, format, s...)
 }
 
 func (log *Logger) Error(s string) {
-	log.logInterface(ErrorFormatter, Error, s)
+	log.logInterface(Error, s)
 }
 
 func (log *Logger) Errorf(format string, s ...interface{}) {
-	log.logInterfacef(ErrorFormatter, Error, format, s...)
+	log.logInterfacef(Error, format, s...)
 }
 
 func (log *Logger) Warn(s string) {
-	log.logInterface(WarnFormatter, Warn, s)
+	log.logInterface(Warn, s)
 }
 
 func (log *Logger) Warnf(format string, s ...interface{}) {
-	log.logInterfacef(WarnFormatter, Warn, format, s...)
+	log.logInterfacef(Warn, format, s...)
 }
 
 func (log *Logger) Debug(s string) {
-	log.logInterface(DebugFormatter, Debug, s)
+	log.logInterface(Debug, s)
 
 }
 
 func (log *Logger) Debugf(format string, s ...interface{}) {
-	log.logInterfacef(DebugFormatter, Debug, format, s...)
+	log.logInterfacef(Debug, format, s...)
 }
 
 func (log *Logger) Close(remove bool) {
