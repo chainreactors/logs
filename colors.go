@@ -71,3 +71,15 @@ func CyanBold(s string) string {
 func CyanLine(s string) string {
 	return "\033[4;36m" + s + "\033[0m"
 }
+
+func White(s string) string {
+	return "\033[0;37m" + s + "\033[0m"
+}
+
+func WhiteBold(s string) string {
+	return "\033[1;37m" + s + "\033[0m"
+}
+
+func WhiteLine(s string) string {
+	return "\033[4;37m" + s + "\033[0m"
+}
