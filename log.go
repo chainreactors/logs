@@ -56,10 +56,10 @@ const (
 var defaultColor = func(s string) string { return s }
 var DefaultColorMap = map[Level]func(string) string{
 	Debug:     Yellow,
-	Error:     Red,
+	Error:     RedBold,
 	Info:      Cyan,
-	Warn:      Yellow,
-	Important: Purple,
+	Warn:      YellowBold,
+	Important: PurpleBold,
 }
 
 var DefaultFormatterMap = map[Level]string{
