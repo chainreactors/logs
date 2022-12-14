@@ -58,7 +58,7 @@ var DefaultColorMap = map[Level]func(string) string{
 	Debug:     Yellow,
 	Error:     Red,
 	Warn:      Cyan,
-	Important: Green,
+	Important: Purple,
 }
 
 var DefaultFormatterMap = map[Level]string{
