@@ -1,5 +1,17 @@
 package logs
 
+func Black(s string) string {
+	return "\033[0;30m" + s + "\033[0m"
+}
+
+func BlackBold(s string) string {
+	return "\033[1;30m" + s + "\033[0m"
+}
+
+func BlackLine(s string) string {
+	return "\033[4;30m" + s + "\033[0m"
+}
+
 func Red(s string) string {
 	return "\033[0;31m" + s + "\033[0m"
 }
