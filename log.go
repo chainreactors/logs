@@ -11,47 +11,7 @@ import (
 	"time"
 )
 
-var Log *Logger = NewLogger(Warn, false)
-
-func NewLogger(level Level, quiet bool) *Logger {
-	log := &Logger{
-		Quiet:  quiet,
-		Level:  level,
-		Color:  false,
-		Writer: os.Stdout,
-		SuffixFunc: func() string {
-			return ", " + getCurtime()
-		},
-		PrefixFunc: func() string {
-			return ""
-		},
-	}
-
-	return log
-}
-
-type Logger struct {
-	Quiet       bool
-	Clean       bool
-	Color       bool
-	logCh       chan string
-	LogFileName string
-	logFile     *File
-	Writer      io.Writer
-	Level       Level
-	SuffixFunc  func() string
-	PrefixFunc  func() string
-}
-
-type Level int
-
-const (
-	Debug     Level = 10
-	Warn      Level = 20
-	Info      Level = 30
-	Error     Level = 40
-	Important Level = 50
-)
+var Log *Logger = NewLogger(Warn)
 
 var defaultColor = func(s string) string { return s }
 var DefaultColorMap = map[Level]func(string) string{
@@ -78,6 +38,32 @@ var DefaultNameMap = map[Level]string{
 	Important: "important",
 }
 
+func NewLogger(level Level) *Logger {
+	log := &Logger{
+		Level:  level,
+		Color:  false,
+		Writer: os.Stdout,
+		SuffixFunc: func() string {
+			return ", " + getCurtime()
+		},
+		PrefixFunc: func() string {
+			return ""
+		},
+	}
+
+	return log
+}
+
+const (
+	Debug     Level = 10
+	Warn      Level = 20
+	Info      Level = 30
+	Error     Level = 40
+	Important Level = 50
+)
+
+type Level int
+
 func (l Level) Name() string {
 	if name, ok := DefaultNameMap[l]; ok {
 		return name
@@ -102,14 +88,47 @@ func (l Level) Color() func(string) string {
 	}
 }
 
-func (log *Logger) Init() {
-	log.InitFile(log.LogFileName)
+type Logger struct {
+	logCh   chan string
+	logFile *File
+
+	Quiet       bool
+	Clean       bool
+	Color       bool
+	LogFileName string
+	Writer      io.Writer
+	Level       Level
+	SuffixFunc  func() string
+	PrefixFunc  func() string
 }
 
-func (log *Logger) InitFile(filename string) {
+func (log *Logger) SetQuiet(q bool) {
+	log.Quiet = q
+}
+
+func (log *Logger) SetClean(c bool) {
+	log.Clean = c
+}
+
+func (log *Logger) SetColor(c bool) {
+	log.Color = c
+}
+
+func (log *Logger) SetLevel(l Level) {
+	log.Level = l
+}
+
+func (log *Logger) SetOutput(w io.Writer) {
+	log.Writer = w
+}
+
+func (log *Logger) SetFile(filename string) {
+	log.LogFileName = path.Join(GetExcPath(), filename)
+}
+
+func (log *Logger) Init() {
 	// 初始化进度文件
 	var err error
-	Log.LogFileName = path.Join(GetExcPath(), filename)
 	log.logFile, err = NewFile(Log.LogFileName, false, false, true)
 	if err != nil {
 		log.Warn("cannot create logfile, err:" + err.Error())
