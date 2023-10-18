@@ -179,12 +179,12 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 
 func (log *Logger) logInterface(level Level, s string) {
 	if !log.Quiet && level >= log.Level {
-		line := fmt.Sprintf(level.Formatter(), s)
+		line := fmt.Sprintf(log.Formatter[level], s)
 		line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 		line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 		line += "\n"
 		if log.Color {
-			fmt.Fprint(log.Writer, level.Color()(line))
+			fmt.Fprint(log.Writer, log.ColorMap[level](line))
 		} else {
 			fmt.Fprint(log.Writer, line)
 		}
@@ -198,12 +198,12 @@ func (log *Logger) logInterface(level Level, s string) {
 
 func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
 	if !log.Quiet && level >= log.Level {
-		line := fmt.Sprintf(fmt.Sprintf(level.Formatter(), format), s...)
+		line := fmt.Sprintf(fmt.Sprintf(log.Formatter[level], format), s...)
 		line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 		line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 		line += "\n"
 		if log.Color {
-			fmt.Fprint(log.Writer, level.Color()(line))
+			fmt.Fprint(log.Writer, log.ColorMap[level](line))
 		} else {
 			fmt.Fprint(log.Writer, line)
 		}
