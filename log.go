@@ -30,7 +30,7 @@ var DefaultFormatterMap = map[Level]string{
 	Important: "[*] %s {{suffix}}",
 }
 
-var DefaultNameMap = map[Level]string{
+var LogNameMap = map[Level]string{
 	Debug:     "debug",
 	Info:      "info",
 	Error:     "error",
@@ -40,9 +40,11 @@ var DefaultNameMap = map[Level]string{
 
 func NewLogger(level Level) *Logger {
 	log := &Logger{
-		Level:  level,
-		Color:  false,
-		Writer: os.Stdout,
+		Level:     level,
+		Color:     false,
+		Writer:    os.Stdout,
+		Formatter: DefaultFormatterMap,
+		ColorMap:  DefaultColorMap,
 		SuffixFunc: func() string {
 			return ", " + getCurtime()
 		},
@@ -65,7 +67,7 @@ const (
 type Level int
 
 func (l Level) Name() string {
-	if name, ok := DefaultNameMap[l]; ok {
+	if name, ok := LogNameMap[l]; ok {
 		return name
 	} else {
 		return strconv.Itoa(int(l))
@@ -98,6 +100,8 @@ type Logger struct {
 	LogFileName string
 	Writer      io.Writer
 	Level       Level
+	Formatter   map[Level]string
+	ColorMap    map[Level]func(string) string
 	SuffixFunc  func() string
 	PrefixFunc  func() string
 }
@@ -114,6 +118,10 @@ func (log *Logger) SetColor(c bool) {
 	log.Color = c
 }
 
+func (log *Logger) SetColorMap(cm map[Level]func(string) string) {
+	log.ColorMap = cm
+}
+
 func (log *Logger) SetLevel(l Level) {
 	log.Level = l
 }
@@ -124,6 +132,26 @@ func (log *Logger) SetOutput(w io.Writer) {
 
 func (log *Logger) SetFile(filename string) {
 	log.LogFileName = path.Join(GetExcPath(), filename)
+}
+
+func (log *Logger) SetFormatter(formatter map[Level]string) {
+	log.Formatter = formatter
+}
+
+func (log *Logger) NewLevel(l int, name string, opt map[string]interface{}) {
+	level := Level(l)
+	LogNameMap[level] = name
+	if opt != nil {
+		if f, ok := opt["formatter"]; ok {
+			log.Formatter[level] = f.(string)
+		} else {
+			log.Formatter[level] = "[" + name + "] %s"
+		}
+
+		if c, ok := opt["color"]; ok {
+			log.ColorMap[level] = c.(func(string) string)
+		}
+	}
 }
 
 func (log *Logger) Init() {
