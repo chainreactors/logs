@@ -2,7 +2,7 @@ package logs
 
 import (
 	"fmt"
-	. "github.com/chainreactors/files"
+	"github.com/chainreactors/files"
 	"io"
 	"os"
 	"path"
@@ -92,7 +92,7 @@ func (l Level) Color() func(string) string {
 
 type Logger struct {
 	logCh   chan string
-	logFile *File
+	logFile *files.File
 
 	Quiet       bool
 	Clean       bool
@@ -131,7 +131,7 @@ func (log *Logger) SetOutput(w io.Writer) {
 }
 
 func (log *Logger) SetFile(filename string) {
-	log.LogFileName = path.Join(GetExcPath(), filename)
+	log.LogFileName = path.Join(files.GetExcPath(), filename)
 }
 
 func (log *Logger) SetFormatter(formatter map[Level]string) {
@@ -157,7 +157,7 @@ func (log *Logger) NewLevel(l int, name string, opt map[string]interface{}) {
 func (log *Logger) Init() {
 	// 初始化进度文件
 	var err error
-	log.logFile, err = NewFile(Log.LogFileName, false, false, true)
+	log.logFile, err = files.NewFile(Log.LogFileName, false, false, true)
 	if err != nil {
 		log.Warn("cannot create logfile, err:" + err.Error())
 		return
