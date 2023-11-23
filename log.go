@@ -156,7 +156,7 @@ func (log *Logger) NewLevel(l int, name string, opt map[string]interface{}) {
 func (log *Logger) Init() {
 	// 初始化进度文件
 	var err error
-	log.logFile, err = files.NewFile(Log.LogFileName, false, false, true)
+	log.logFile, err = files.NewFile(log.LogFileName, false, false, true)
 	if err != nil {
 		log.Warn("cannot create logfile, err:" + err.Error())
 		return
