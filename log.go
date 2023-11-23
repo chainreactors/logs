@@ -5,7 +5,6 @@ import (
 	"github.com/chainreactors/files"
 	"io"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -40,11 +39,11 @@ var LogNameMap = map[Level]string{
 
 func NewLogger(level Level) *Logger {
 	log := &Logger{
-		Level:     level,
-		Color:     false,
-		Writer:    os.Stdout,
-		Formatter: DefaultFormatterMap,
-		ColorMap:  DefaultColorMap,
+		level:     level,
+		color:     false,
+		writer:    os.Stdout,
+		formatter: DefaultFormatterMap,
+		colorMap:  DefaultColorMap,
 		SuffixFunc: func() string {
 			return ", " + getCurtime()
 		},
@@ -94,48 +93,48 @@ type Logger struct {
 	logCh   chan string
 	logFile *files.File
 
-	Quiet       bool
-	Clean       bool
-	Color       bool
+	quiet       bool
+	clean       bool
+	color       bool
 	LogFileName string
-	Writer      io.Writer
-	Level       Level
-	Formatter   map[Level]string
-	ColorMap    map[Level]func(string) string
+	writer      io.Writer
+	level       Level
+	formatter   map[Level]string
+	colorMap    map[Level]func(string) string
 	SuffixFunc  func() string
 	PrefixFunc  func() string
 }
 
 func (log *Logger) SetQuiet(q bool) {
-	log.Quiet = q
+	log.quiet = q
 }
 
 func (log *Logger) SetClean(c bool) {
-	log.Clean = c
+	log.clean = c
 }
 
 func (log *Logger) SetColor(c bool) {
-	log.Color = c
+	log.color = c
 }
 
 func (log *Logger) SetColorMap(cm map[Level]func(string) string) {
-	log.ColorMap = cm
+	log.colorMap = cm
 }
 
 func (log *Logger) SetLevel(l Level) {
-	log.Level = l
+	log.level = l
 }
 
 func (log *Logger) SetOutput(w io.Writer) {
-	log.Writer = w
+	log.writer = w
 }
 
 func (log *Logger) SetFile(filename string) {
-	log.LogFileName = path.Join(files.GetExcPath(), filename)
+	log.LogFileName = filename
 }
 
 func (log *Logger) SetFormatter(formatter map[Level]string) {
-	log.Formatter = formatter
+	log.formatter = formatter
 }
 
 func (log *Logger) NewLevel(l int, name string, opt map[string]interface{}) {
@@ -143,13 +142,13 @@ func (log *Logger) NewLevel(l int, name string, opt map[string]interface{}) {
 	LogNameMap[level] = name
 	if opt != nil {
 		if f, ok := opt["formatter"]; ok {
-			log.Formatter[level] = f.(string)
+			log.formatter[level] = f.(string)
 		} else {
-			log.Formatter[level] = "[" + name + "] %s"
+			log.formatter[level] = "[" + name + "] %s"
 		}
 
 		if c, ok := opt["color"]; ok {
-			log.ColorMap[level] = c.(func(string) string)
+			log.colorMap[level] = c.(func(string) string)
 		}
 	}
 }
@@ -166,27 +165,27 @@ func (log *Logger) Init() {
 }
 
 func (log *Logger) Console(s string) {
-	if !log.Clean {
-		fmt.Fprint(log.Writer, s)
+	if !log.clean {
+		fmt.Fprint(log.writer, s)
 	}
 }
 
 func (log *Logger) Consolef(format string, s ...interface{}) {
-	if !log.Clean {
-		fmt.Fprintf(log.Writer, format, s...)
+	if !log.clean {
+		fmt.Fprintf(log.writer, format, s...)
 	}
 }
 
 func (log *Logger) logInterface(level Level, s string) {
-	if !log.Quiet && level >= log.Level {
-		line := fmt.Sprintf(log.Formatter[level], s)
+	if !log.quiet && level >= log.level {
+		line := fmt.Sprintf(log.formatter[level], s)
 		line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 		line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 		line += "\n"
-		if log.Color {
-			fmt.Fprint(log.Writer, log.ColorMap[level](line))
+		if log.color {
+			fmt.Fprint(log.writer, log.colorMap[level](line))
 		} else {
-			fmt.Fprint(log.Writer, line)
+			fmt.Fprint(log.writer, line)
 		}
 
 		if log.logFile != nil {
@@ -197,15 +196,15 @@ func (log *Logger) logInterface(level Level, s string) {
 }
 
 func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
-	if !log.Quiet && level >= log.Level {
-		line := fmt.Sprintf(fmt.Sprintf(log.Formatter[level], format), s...)
+	if !log.quiet && level >= log.level {
+		line := fmt.Sprintf(fmt.Sprintf(log.formatter[level], format), s...)
 		line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 		line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 		line += "\n"
-		if log.Color {
-			fmt.Fprint(log.Writer, log.ColorMap[level](line))
+		if log.color {
+			fmt.Fprint(log.writer, log.colorMap[level](line))
 		} else {
-			fmt.Fprint(log.Writer, line)
+			fmt.Fprint(log.writer, line)
 		}
 
 		if log.logFile != nil {
