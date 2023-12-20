@@ -93,8 +93,8 @@ type Logger struct {
 	logCh   chan string
 	logFile *files.File
 
-	quiet       bool
-	clean       bool
+	quiet       bool // is print level
+	clean       bool // is print console
 	color       bool
 	LogFileName string
 	writer      io.Writer
