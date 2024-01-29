@@ -55,6 +55,20 @@ func NewLogger(level Level) *Logger {
 	return log
 }
 
+// NewFileLogger create a pure file logger
+func NewFileLogger(filename string) (*Logger, error) {
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return nil, err
+	}
+
+	log := &Logger{
+		level:  Warn,
+		writer: file,
+	}
+	return log, nil
+}
+
 const (
 	Debug     Level = 10
 	Warn      Level = 20
@@ -93,8 +107,8 @@ type Logger struct {
 	logCh   chan string
 	logFile *files.File
 
-	quiet       bool // is print level
-	clean       bool // is print console
+	quiet       bool // is enable Print
+	clean       bool // is enable Console()
 	color       bool
 	LogFileName string
 	writer      io.Writer
@@ -201,6 +215,7 @@ func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
 		line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 		line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
 		line += "\n"
+
 		if log.color {
 			fmt.Fprint(log.writer, log.colorMap[level](line))
 		} else {
