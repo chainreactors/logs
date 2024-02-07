@@ -190,14 +190,11 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 	}
 }
 
-func (log *Logger) logInterface(level Level, s string) {
+func (log *Logger) logInterface(level Level, s interface{}) {
 	if !log.quiet && level >= log.level {
-		line := fmt.Sprintf(log.formatter[level], s)
-		line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
-		line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
-		line += "\n"
+		line := log.Format(level, s)
 		if log.color {
-			fmt.Fprint(log.writer, log.colorMap[level](line))
+			fmt.Fprint(log.writer, log.Color(level, line))
 		} else {
 			fmt.Fprint(log.writer, line)
 		}
@@ -211,13 +208,9 @@ func (log *Logger) logInterface(level Level, s string) {
 
 func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
 	if !log.quiet && level >= log.level {
-		line := fmt.Sprintf(fmt.Sprintf(log.formatter[level], format), s...)
-		line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
-		line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
-		line += "\n"
-
+		line := log.Format(level, s)
 		if log.color {
-			fmt.Fprint(log.writer, log.colorMap[level](line))
+			fmt.Fprint(log.writer, log.Color(level, line))
 		} else {
 			fmt.Fprint(log.writer, line)
 		}
@@ -229,7 +222,7 @@ func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
 	}
 }
 
-func (log *Logger) Log(level Level, s string) {
+func (log *Logger) Log(level Level, s interface{}) {
 	log.logInterface(level, s)
 }
 
@@ -237,7 +230,7 @@ func (log *Logger) Logf(level Level, format string, s ...interface{}) {
 	log.logInterfacef(level, format, s...)
 }
 
-func (log *Logger) Important(s string) {
+func (log *Logger) Important(s interface{}) {
 	log.logInterface(Important, s)
 }
 
@@ -245,7 +238,7 @@ func (log *Logger) Importantf(format string, s ...interface{}) {
 	log.logInterfacef(Important, format, s...)
 }
 
-func (log *Logger) Info(s string) {
+func (log *Logger) Info(s interface{}) {
 	log.logInterface(Info, s)
 }
 
@@ -253,7 +246,7 @@ func (log *Logger) Infof(format string, s ...interface{}) {
 	log.logInterfacef(Info, format, s...)
 }
 
-func (log *Logger) Error(s string) {
+func (log *Logger) Error(s interface{}) {
 	log.logInterface(Error, s)
 }
 
@@ -261,7 +254,7 @@ func (log *Logger) Errorf(format string, s ...interface{}) {
 	log.logInterfacef(Error, format, s...)
 }
 
-func (log *Logger) Warn(s string) {
+func (log *Logger) Warn(s interface{}) {
 	log.logInterface(Warn, s)
 }
 
@@ -269,13 +262,38 @@ func (log *Logger) Warnf(format string, s ...interface{}) {
 	log.logInterfacef(Warn, format, s...)
 }
 
-func (log *Logger) Debug(s string) {
+func (log *Logger) Debug(s interface{}) {
 	log.logInterface(Debug, s)
 
 }
 
 func (log *Logger) Debugf(format string, s ...interface{}) {
 	log.logInterfacef(Debug, format, s...)
+}
+
+func (log *Logger) Color(level Level, line string) string {
+	if c, ok := log.colorMap[level]; ok {
+		return c(line)
+	} else if c, ok := DefaultColorMap[level]; ok {
+		return c(line)
+	} else {
+		return line
+	}
+}
+
+func (log *Logger) Format(level Level, s ...interface{}) string {
+	var line string
+	if f, ok := log.formatter[level]; ok {
+		line = fmt.Sprintf(f, s...)
+	} else if f, ok := DefaultFormatterMap[level]; ok {
+		line = fmt.Sprintf(f, s...)
+	} else {
+		line = fmt.Sprintf("[%s] %s ", append([]interface{}{level.Name()}, s...)...)
+	}
+	line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
+	line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
+	line += "\n"
+	return line
 }
 
 func (log *Logger) Close(remove bool) {
