@@ -29,7 +29,7 @@ var DefaultFormatterMap = map[Level]string{
 	Important: "[*] %s {{suffix}}",
 }
 
-var LogNameMap = map[Level]string{
+var Levels = map[Level]string{
 	Debug:     "debug",
 	Info:      "info",
 	Error:     "error",
@@ -37,11 +37,24 @@ var LogNameMap = map[Level]string{
 	Important: "important",
 }
 
+func AddLevel(level Level, name string, opts ...interface{}) {
+	Levels[level] = name
+	for _, opt := range opts {
+		switch opt.(type) {
+		case string:
+			DefaultFormatterMap[level] = opt.(string)
+		case func(string) string:
+			DefaultColorMap[level] = opt.(func(string) string)
+		}
+	}
+}
+
 func NewLogger(level Level) *Logger {
 	log := &Logger{
 		level:     level,
 		color:     false,
 		writer:    os.Stdout,
+		levels:    Levels,
 		formatter: DefaultFormatterMap,
 		colorMap:  DefaultColorMap,
 		SuffixFunc: func() string {
@@ -63,8 +76,10 @@ func NewFileLogger(filename string) (*Logger, error) {
 	}
 
 	log := &Logger{
-		level:  Warn,
-		writer: file,
+		level:     Warn,
+		writer:    file,
+		formatter: DefaultFormatterMap,
+		levels:    Levels,
 	}
 	return log, nil
 }
@@ -80,7 +95,7 @@ const (
 type Level int
 
 func (l Level) Name() string {
-	if name, ok := LogNameMap[l]; ok {
+	if name, ok := Levels[l]; ok {
 		return name
 	} else {
 		return strconv.Itoa(int(l))
@@ -113,6 +128,7 @@ type Logger struct {
 	LogFileName string
 	writer      io.Writer
 	level       Level
+	levels      map[Level]string
 	formatter   map[Level]string
 	colorMap    map[Level]func(string) string
 	SuffixFunc  func() string
@@ -149,22 +165,6 @@ func (log *Logger) SetFile(filename string) {
 
 func (log *Logger) SetFormatter(formatter map[Level]string) {
 	log.formatter = formatter
-}
-
-func (log *Logger) NewLevel(l int, name string, opt map[string]interface{}) {
-	level := Level(l)
-	LogNameMap[level] = name
-	if opt != nil {
-		if f, ok := opt["formatter"]; ok {
-			log.formatter[level] = f.(string)
-		} else {
-			log.formatter[level] = "[" + name + "] %s"
-		}
-
-		if c, ok := opt["color"]; ok {
-			log.colorMap[level] = c.(func(string) string)
-		}
-	}
 }
 
 func (log *Logger) Init() {
