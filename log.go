@@ -208,7 +208,7 @@ func (log *Logger) logInterface(level Level, s interface{}) {
 
 func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
 	if !log.quiet && level >= log.level {
-		line := log.Format(level, s)
+		line := log.Format(level, fmt.Sprintf(format, s...))
 		if log.color {
 			fmt.Fprint(log.writer, log.Color(level, line))
 		} else {
