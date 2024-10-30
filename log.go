@@ -51,8 +51,8 @@ func AddLevel(level Level, name string, opts ...interface{}) {
 
 func NewLogger(level Level) *Logger {
 	log := &Logger{
-		level:     level,
-		color:     false,
+		Level:     level,
+		Color:     false,
 		writer:    os.Stdout,
 		levels:    Levels,
 		formatter: DefaultFormatterMap,
@@ -76,7 +76,7 @@ func NewFileLogger(filename string) (*Logger, error) {
 	}
 
 	log := &Logger{
-		level:     Warn,
+		Level:     Warn,
 		writer:    file,
 		formatter: DefaultFormatterMap,
 		levels:    Levels,
@@ -122,12 +122,12 @@ type Logger struct {
 	logCh   chan string
 	logFile *files.File
 
-	quiet       bool // is enable Print
-	clean       bool // is enable Console()
-	color       bool
+	Quiet       bool // is enable Print
+	Clean       bool // is enable Console()
+	Color       bool
 	LogFileName string
 	writer      io.Writer
-	level       Level
+	Level       Level
 	levels      map[Level]string
 	formatter   map[Level]string
 	colorMap    map[Level]func(string) string
@@ -136,15 +136,15 @@ type Logger struct {
 }
 
 func (log *Logger) SetQuiet(q bool) {
-	log.quiet = q
+	log.Quiet = q
 }
 
 func (log *Logger) SetClean(c bool) {
-	log.clean = c
+	log.Clean = c
 }
 
 func (log *Logger) SetColor(c bool) {
-	log.color = c
+	log.Color = c
 }
 
 func (log *Logger) SetColorMap(cm map[Level]func(string) string) {
@@ -152,7 +152,7 @@ func (log *Logger) SetColorMap(cm map[Level]func(string) string) {
 }
 
 func (log *Logger) SetLevel(l Level) {
-	log.level = l
+	log.Level = l
 }
 
 func (log *Logger) SetOutput(w io.Writer) {
@@ -179,22 +179,22 @@ func (log *Logger) Init() {
 }
 
 func (log *Logger) Console(s string) {
-	if !log.clean {
+	if !log.Clean {
 		fmt.Fprint(log.writer, s)
 	}
 }
 
 func (log *Logger) Consolef(format string, s ...interface{}) {
-	if !log.clean {
+	if !log.Clean {
 		fmt.Fprintf(log.writer, format, s...)
 	}
 }
 
 func (log *Logger) logInterface(level Level, s interface{}) {
-	if !log.quiet && level >= log.level {
+	if !log.Quiet && level >= log.Level {
 		line := log.Format(level, s)
-		if log.color {
-			fmt.Fprint(log.writer, log.Color(level, line))
+		if log.Color {
+			fmt.Fprint(log.writer, log.SetLevelColor(level, line))
 		} else {
 			fmt.Fprint(log.writer, line)
 		}
@@ -207,10 +207,10 @@ func (log *Logger) logInterface(level Level, s interface{}) {
 }
 
 func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
-	if !log.quiet && level >= log.level {
+	if !log.Quiet && level >= log.Level {
 		line := log.Format(level, fmt.Sprintf(format, s...))
-		if log.color {
-			fmt.Fprint(log.writer, log.Color(level, line))
+		if log.Color {
+			fmt.Fprint(log.writer, log.SetLevelColor(level, line))
 		} else {
 			fmt.Fprint(log.writer, line)
 		}
@@ -271,7 +271,7 @@ func (log *Logger) Debugf(format string, s ...interface{}) {
 	log.logInterfacef(Debug, format, s...)
 }
 
-func (log *Logger) Color(level Level, line string) string {
+func (log *Logger) SetLevelColor(level Level, line string) string {
 	if c, ok := log.colorMap[level]; ok {
 		return c(line)
 	} else if c, ok := DefaultColorMap[level]; ok {
@@ -309,7 +309,7 @@ func (log *Logger) Close(remove bool) {
 	}
 }
 
-//获取当前时间
+// 获取当前时间
 func getCurtime() string {
 	curtime := time.Now().Format("2006-01-02 15:04.05")
 	return curtime

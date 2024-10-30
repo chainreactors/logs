@@ -8,10 +8,10 @@ func TestLogger_Console(t *testing.T) {
 	Log.SetFile("1.txt")
 	Log.Init()
 	defer Log.Close(false)
-	Log.Level = 1
+	Log.SetLevel(1)
 	Log.Important("test")
-	Log.Color = true
-	Log.Important("test")
-	LogNameMap[1] = "detail"
+	Log.SetColor(true)
+	Log.Importantf("%stest", "aaa")
+	AddLevel(1, "test")
 	Log.Log(1, "test")
 }
