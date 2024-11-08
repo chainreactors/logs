@@ -22,11 +22,11 @@ var DefaultColorMap = map[Level]func(string) string{
 }
 
 var DefaultFormatterMap = map[Level]string{
-	Debug:     "[debug] %s ",
-	Warn:      "[warn] %s ",
-	Info:      "[+] %s {{suffix}}",
-	Error:     "[-] %s {{suffix}}",
-	Important: "[*] %s {{suffix}}",
+	Debug:     "[debug] %s \n",
+	Warn:      "[warn] %s \n",
+	Info:      "[+] %s {{suffix}}\n",
+	Error:     "[-] %s {{suffix}}\n",
+	Important: "[*] %s {{suffix}}\n",
 }
 
 var Levels = map[Level]string{
@@ -292,7 +292,6 @@ func (log *Logger) Format(level Level, s ...interface{}) string {
 	}
 	line = strings.Replace(line, "{{suffix}}", log.SuffixFunc(), -1)
 	line = strings.Replace(line, "{{prefix}}", log.PrefixFunc(), -1)
-	line += "\n"
 	return line
 }
 
