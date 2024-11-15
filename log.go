@@ -190,13 +190,19 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 	}
 }
 
-func (log *Logger) logInterface(level Level, s interface{}) {
+func (log *Logger) FConsolef(writer io.Writer, format string, s ...interface{}) {
+	if !log.Clean {
+		fmt.Fprintf(writer, format, s...)
+	}
+}
+
+func (log *Logger) logInterface(writer io.Writer, level Level, s interface{}) {
 	if !log.Quiet && level >= log.Level {
 		line := log.Format(level, s)
 		if log.Color {
-			fmt.Fprint(log.writer, log.SetLevelColor(level, line))
+			fmt.Fprint(writer, log.SetLevelColor(level, line))
 		} else {
-			fmt.Fprint(log.writer, line)
+			fmt.Fprint(writer, line)
 		}
 
 		if log.logFile != nil {
@@ -206,13 +212,13 @@ func (log *Logger) logInterface(level Level, s interface{}) {
 	}
 }
 
-func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
+func (log *Logger) logInterfacef(writer io.Writer, level Level, format string, s ...interface{}) {
 	if !log.Quiet && level >= log.Level {
 		line := log.Format(level, fmt.Sprintf(format, s...))
 		if log.Color {
-			fmt.Fprint(log.writer, log.SetLevelColor(level, line))
+			fmt.Fprint(writer, log.SetLevelColor(level, line))
 		} else {
-			fmt.Fprint(log.writer, line)
+			fmt.Fprint(writer, line)
 		}
 
 		if log.logFile != nil {
@@ -223,52 +229,76 @@ func (log *Logger) logInterfacef(level Level, format string, s ...interface{}) {
 }
 
 func (log *Logger) Log(level Level, s interface{}) {
-	log.logInterface(level, s)
+	log.logInterface(log.writer, level, s)
 }
 
 func (log *Logger) Logf(level Level, format string, s ...interface{}) {
-	log.logInterfacef(level, format, s...)
+	log.logInterfacef(log.writer, level, format, s...)
+}
+
+func (log *Logger) FLogf(writer io.Writer, level Level, s ...interface{}) {
+	log.logInterface(writer, level, fmt.Sprintln(s...))
 }
 
 func (log *Logger) Important(s interface{}) {
-	log.logInterface(Important, s)
+	log.logInterface(log.writer, Important, s)
 }
 
 func (log *Logger) Importantf(format string, s ...interface{}) {
-	log.logInterfacef(Important, format, s...)
+	log.logInterfacef(log.writer, Important, format, s...)
+}
+
+func (log *Logger) FImportantf(writer io.Writer, format string, s ...interface{}) {
+	log.logInterfacef(writer, Important, format, s...)
 }
 
 func (log *Logger) Info(s interface{}) {
-	log.logInterface(Info, s)
+	log.logInterface(log.writer, Info, s)
 }
 
 func (log *Logger) Infof(format string, s ...interface{}) {
-	log.logInterfacef(Info, format, s...)
+	log.logInterfacef(log.writer, Info, format, s...)
+}
+
+func (log *Logger) FInfof(writer io.Writer, format string, s ...interface{}) {
+	log.logInterfacef(writer, Info, format, s...)
 }
 
 func (log *Logger) Error(s interface{}) {
-	log.logInterface(Error, s)
+	log.logInterface(log.writer, Error, s)
 }
 
 func (log *Logger) Errorf(format string, s ...interface{}) {
-	log.logInterfacef(Error, format, s...)
+	log.logInterfacef(log.writer, Error, format, s...)
+}
+
+func (log *Logger) FErrorf(writer io.Writer, format string, s ...interface{}) {
+	log.logInterfacef(writer, Error, format, s...)
 }
 
 func (log *Logger) Warn(s interface{}) {
-	log.logInterface(Warn, s)
+	log.logInterface(log.writer, Warn, s)
 }
 
 func (log *Logger) Warnf(format string, s ...interface{}) {
-	log.logInterfacef(Warn, format, s...)
+	log.logInterfacef(log.writer, Warn, format, s...)
+}
+
+func (log *Logger) FWarnf(writer io.Writer, format string, s ...interface{}) {
+	log.logInterfacef(writer, Warn, format, s...)
 }
 
 func (log *Logger) Debug(s interface{}) {
-	log.logInterface(Debug, s)
+	log.logInterface(log.writer, Debug, s)
 
 }
 
 func (log *Logger) Debugf(format string, s ...interface{}) {
-	log.logInterfacef(Debug, format, s...)
+	log.logInterfacef(log.writer, Debug, format, s...)
+}
+
+func (log *Logger) FDebugf(writer io.Writer, format string, s ...interface{}) {
+	log.logInterfacef(writer, Debug, format, s...)
 }
 
 func (log *Logger) SetLevelColor(level Level, line string) string {
