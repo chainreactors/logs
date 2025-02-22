@@ -10,31 +10,31 @@ import (
 	"time"
 )
 
-var Log *Logger = NewLogger(Warn)
+var Log *Logger = NewLogger(WarnLevel)
 
 var defaultColor = func(s string) string { return s }
 var DefaultColorMap = map[Level]func(string) string{
-	Debug:     Yellow,
-	Error:     RedBold,
-	Info:      Cyan,
-	Warn:      YellowBold,
-	Important: PurpleBold,
+	DebugLevel:     Yellow,
+	ErrorLevel:     RedBold,
+	InfoLevel:      Cyan,
+	WarnLevel:      YellowBold,
+	ImportantLevel: PurpleBold,
 }
 
 var DefaultFormatterMap = map[Level]string{
-	Debug:     "[debug] %s \n",
-	Warn:      "[warn] %s \n",
-	Info:      "[+] %s {{suffix}}\n",
-	Error:     "[-] %s {{suffix}}\n",
-	Important: "[*] %s {{suffix}}\n",
+	DebugLevel:     "[debug] %s \n",
+	WarnLevel:      "[warn] %s \n",
+	InfoLevel:      "[+] %s {{suffix}}\n",
+	ErrorLevel:     "[-] %s {{suffix}}\n",
+	ImportantLevel: "[*] %s {{suffix}}\n",
 }
 
 var Levels = map[Level]string{
-	Debug:     "debug",
-	Info:      "info",
-	Error:     "error",
-	Warn:      "warn",
-	Important: "important",
+	DebugLevel:     "debug",
+	InfoLevel:      "info",
+	ErrorLevel:     "error",
+	WarnLevel:      "warn",
+	ImportantLevel: "important",
 }
 
 func AddLevel(level Level, name string, opts ...interface{}) {
@@ -76,7 +76,7 @@ func NewFileLogger(filename string) (*Logger, error) {
 	}
 
 	log := &Logger{
-		Level:     Warn,
+		Level:     WarnLevel,
 		writer:    file,
 		formatter: DefaultFormatterMap,
 		levels:    Levels,
@@ -85,11 +85,11 @@ func NewFileLogger(filename string) (*Logger, error) {
 }
 
 const (
-	Debug     Level = 10
-	Warn      Level = 20
-	Info      Level = 30
-	Error     Level = 40
-	Important Level = 50
+	DebugLevel     Level = 10
+	WarnLevel      Level = 20
+	InfoLevel      Level = 30
+	ErrorLevel     Level = 40
+	ImportantLevel Level = 50
 )
 
 type Level int
@@ -241,64 +241,64 @@ func (log *Logger) FLogf(writer io.Writer, level Level, s ...interface{}) {
 }
 
 func (log *Logger) Important(s interface{}) {
-	log.logInterface(log.writer, Important, s)
+	log.logInterface(log.writer, ImportantLevel, s)
 }
 
 func (log *Logger) Importantf(format string, s ...interface{}) {
-	log.logInterfacef(log.writer, Important, format, s...)
+	log.logInterfacef(log.writer, ImportantLevel, format, s...)
 }
 
 func (log *Logger) FImportantf(writer io.Writer, format string, s ...interface{}) {
-	log.logInterfacef(writer, Important, format, s...)
+	log.logInterfacef(writer, ImportantLevel, format, s...)
 }
 
 func (log *Logger) Info(s interface{}) {
-	log.logInterface(log.writer, Info, s)
+	log.logInterface(log.writer, InfoLevel, s)
 }
 
 func (log *Logger) Infof(format string, s ...interface{}) {
-	log.logInterfacef(log.writer, Info, format, s...)
+	log.logInterfacef(log.writer, InfoLevel, format, s...)
 }
 
 func (log *Logger) FInfof(writer io.Writer, format string, s ...interface{}) {
-	log.logInterfacef(writer, Info, format, s...)
+	log.logInterfacef(writer, InfoLevel, format, s...)
 }
 
 func (log *Logger) Error(s interface{}) {
-	log.logInterface(log.writer, Error, s)
+	log.logInterface(log.writer, ErrorLevel, s)
 }
 
 func (log *Logger) Errorf(format string, s ...interface{}) {
-	log.logInterfacef(log.writer, Error, format, s...)
+	log.logInterfacef(log.writer, ErrorLevel, format, s...)
 }
 
 func (log *Logger) FErrorf(writer io.Writer, format string, s ...interface{}) {
-	log.logInterfacef(writer, Error, format, s...)
+	log.logInterfacef(writer, ErrorLevel, format, s...)
 }
 
 func (log *Logger) Warn(s interface{}) {
-	log.logInterface(log.writer, Warn, s)
+	log.logInterface(log.writer, WarnLevel, s)
 }
 
 func (log *Logger) Warnf(format string, s ...interface{}) {
-	log.logInterfacef(log.writer, Warn, format, s...)
+	log.logInterfacef(log.writer, WarnLevel, format, s...)
 }
 
 func (log *Logger) FWarnf(writer io.Writer, format string, s ...interface{}) {
-	log.logInterfacef(writer, Warn, format, s...)
+	log.logInterfacef(writer, WarnLevel, format, s...)
 }
 
 func (log *Logger) Debug(s interface{}) {
-	log.logInterface(log.writer, Debug, s)
+	log.logInterface(log.writer, DebugLevel, s)
 
 }
 
 func (log *Logger) Debugf(format string, s ...interface{}) {
-	log.logInterfacef(log.writer, Debug, format, s...)
+	log.logInterfacef(log.writer, DebugLevel, format, s...)
 }
 
 func (log *Logger) FDebugf(writer io.Writer, format string, s ...interface{}) {
-	log.logInterfacef(writer, Debug, format, s...)
+	log.logInterfacef(writer, DebugLevel, format, s...)
 }
 
 func (log *Logger) SetLevelColor(level Level, line string) string {
@@ -336,6 +336,54 @@ func (log *Logger) Close(remove bool) {
 			log.Warn(err.Error())
 		}
 	}
+}
+
+func Debug(s interface{}) {
+	Log.Debug(s)
+}
+
+func Debugf(format string, s ...interface{}) {
+	Log.Debugf(format, s...)
+}
+
+func Info(s interface{}) {
+	Log.Info(s)
+}
+
+func Infof(format string, s ...interface{}) {
+	Log.Infof(format, s...)
+}
+
+func Error(s interface{}) {
+	Log.Error(s)
+}
+
+func Errorf(format string, s ...interface{}) {
+	Log.Errorf(format, s...)
+}
+
+func Warn(s interface{}) {
+	Log.Warn(s)
+}
+
+func Warnf(format string, s ...interface{}) {
+	Log.Warnf(format, s...)
+}
+
+func Important(s interface{}) {
+	Log.Important(s)
+}
+
+func Importantf(format string, s ...interface{}) {
+	Log.Importantf(format, s...)
+}
+
+func Console(s string) {
+	Log.Console(s)
+}
+
+func Consolef(format string, s ...interface{}) {
+	Log.Consolef(format, s...)
 }
 
 // 获取当前时间
