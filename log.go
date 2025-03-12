@@ -236,8 +236,8 @@ func (log *Logger) Logf(level Level, format string, s ...interface{}) {
 	log.logInterfacef(log.writer, level, format, s...)
 }
 
-func (log *Logger) FLogf(writer io.Writer, level Level, s ...interface{}) {
-	log.logInterface(writer, level, fmt.Sprintln(s...))
+func (log *Logger) FLogf(writer io.Writer, level Level, format string, s ...interface{}) {
+	log.logInterfacef(writer, level, format, s...)
 }
 
 func (log *Logger) Important(s interface{}) {
