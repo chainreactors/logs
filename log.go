@@ -2,7 +2,6 @@ package logs
 
 import (
 	"fmt"
-	"github.com/chainreactors/files"
 	"io"
 	"os"
 	"strconv"
@@ -120,7 +119,7 @@ func (l Level) Color() func(string) string {
 
 type Logger struct {
 	logCh   chan string
-	logFile *files.File
+	logFile *logFile
 
 	Quiet       bool // is enable Print
 	Clean       bool // is enable Console()
@@ -170,7 +169,7 @@ func (log *Logger) SetFormatter(formatter map[Level]string) {
 func (log *Logger) Init() {
 	// 初始化进度文件
 	var err error
-	log.logFile, err = files.NewFile(log.LogFileName, false, false, true)
+	log.logFile, err = newLogFile(log.LogFileName)
 	if err != nil {
 		log.Warn("cannot create logfile, err:" + err.Error())
 		return
