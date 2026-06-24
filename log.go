@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -118,6 +119,7 @@ func (l Level) Color() func(string) string {
 }
 
 type Logger struct {
+	mu      sync.Mutex
 	logCh   chan string
 	logFile *logFile
 
@@ -191,18 +193,22 @@ func (log *Logger) Consolef(format string, s ...interface{}) {
 
 func (log *Logger) FConsolef(writer io.Writer, format string, s ...interface{}) {
 	if !log.Clean {
+		log.mu.Lock()
 		fmt.Fprintf(writer, format, s...)
+		log.mu.Unlock()
 	}
 }
 
 func (log *Logger) logInterface(writer io.Writer, level Level, s interface{}) {
 	if !log.Quiet && level >= log.Level {
 		line := log.Format(level, s)
+		log.mu.Lock()
 		if log.Color {
 			fmt.Fprint(writer, log.SetLevelColor(level, line))
 		} else {
 			fmt.Fprint(writer, line)
 		}
+		log.mu.Unlock()
 
 		if log.logFile != nil {
 			log.logFile.SafeWrite(line)
@@ -214,11 +220,13 @@ func (log *Logger) logInterface(writer io.Writer, level Level, s interface{}) {
 func (log *Logger) logInterfacef(writer io.Writer, level Level, format string, s ...interface{}) {
 	if !log.Quiet && level >= log.Level {
 		line := log.Format(level, fmt.Sprintf(format, s...))
+		log.mu.Lock()
 		if log.Color {
 			fmt.Fprint(writer, log.SetLevelColor(level, line))
 		} else {
 			fmt.Fprint(writer, line)
 		}
+		log.mu.Unlock()
 
 		if log.logFile != nil {
 			log.logFile.SafeWrite(line)
